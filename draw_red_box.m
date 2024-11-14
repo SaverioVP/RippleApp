@@ -1,4 +1,4 @@
-function draw_red_box(axesHandle, start_time, end_time, y_start, y_end, label_number)
+function draw_red_box(axesHandle, start_time, end_time, y_start, y_end)
     % Define the x and y coordinates of the box
     xBox = [start_time, end_time, end_time, start_time];
     yBox = [y_start, y_start, y_end, y_end];
