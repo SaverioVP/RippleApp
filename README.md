@@ -8,3 +8,5 @@ RP_DETECT Method: Uses the Hilbert transform method to analyze the amplitude env
 To use:
 - Requires matlab 2024b
 - Open RippleApp.mlapp. This should open it in the app designer. Press RUN at the top
+
+![Main Screenshot](RippleApp/screenshot_main.png)
