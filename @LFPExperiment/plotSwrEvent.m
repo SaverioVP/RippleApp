@@ -10,7 +10,7 @@ this_event = obj.swr_events{tetrode_num}(event_id);  % only tetrode 1 for now
 es = this_event.event_start;
 ee = this_event.event_end;
 
-% Add 50 samples of padding to the raw LFP trace to show swr event better
+% Add samples of padding to the raw LFP trace to show swr event better
 padding = 200;
 es_padded = max(1, es - padding);  % Ensure indices are within bounds
 ee_padded = min(length(obj.time_vec), ee + padding);
@@ -21,16 +21,16 @@ raw_time_vec_padded = obj.time_vec(es_padded:ee_padded);
 raw_lfp_padded = obj.lfp_data{tetrode_num}(es_padded:ee_padded);
 
 % Subset time vector for the event (no padding) for the other plots
-event_time_vec = obj.time_vec(es:ee);
+% event_time_vec = obj.time_vec(es:ee);
 %event_lfp = obj.lfp_data{tetrode_num}(es:ee);
 
-% Subset time vector for this event
-event_time_vec = obj.time_vec(es:ee);
-event_lfp = obj.lfp_data{tetrode_num}(es:ee);
+% % Subset time vector for this event
+% event_time_vec = obj.time_vec(es:ee);
+% event_lfp = obj.lfp_data{tetrode_num}(es:ee);
 
 
 
-%% Plot the raw LFP trace
+%% Plot the raw LFP trace in blue and ripple portion in red
 hold(axesHandle, 'on');
 
 % Find the indices of the ripple event within the padded range
@@ -65,7 +65,8 @@ if showEnvelope
           [0.3 1 0.3], 'FaceAlpha', 0.3, 'EdgeColor', 'none');  % Green shaded area
 end
 
-
+%% Show Zero Crossings
+%% Plot stuff
 % Add a dotted red line at y = 0
 yline(axesHandle, 0, 'r--', 'LineWidth', 1);
 

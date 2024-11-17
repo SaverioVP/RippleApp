@@ -51,7 +51,7 @@ classdef SWREvent
             obj.duration = obj.time_end - obj.time_start;
                         
             obj.total_samples = length(obj.raw_lfp_waveform);
-
+            
             % Detect zero crossings and calculate the internal
             % frequency using ripple waveform provided by detection
             % func

@@ -18,7 +18,7 @@ function swrEvents = RP_DETECT_CSP(lfp_signal, sf, std_cutoff, freq_band, window
 swrEvents = SWREvent.empty();  % Initialize an empty array of SWR_Event objects
 avg_spw = zeros(1, 2 * window_size + 1);  % Initialize variable to hold average sharp wave
 
-% Filter the signal in the ripple band (150-250 Hz)
+% Filter the signal in the ripple band
 lfp_rp = eegfilt(lfp_signal, sf, freq_band(1), freq_band(2));  
 lfp_rp_hil = abs(hilbert(lfp_rp));  % Envelope of the ripple band signal using Hilbert transform
 lfp_rp_power = smoothdata(lfp_rp_hil, 'gaussian', 10);  % Smooth the ripple band envelope  
@@ -49,7 +49,7 @@ if ~isempty(temp)
         [peak_ripple_amplitude, relative_peak_index] = max(lfp_rp_hil(event_start:event_end));  % Find the maximum amplitude of the ripple event within the current window and index of the peak within the event window (relative to the window start)
         ripple_peak_index = relative_peak_index + event_start - 1;
 
-        if peak_ripple_amplitude > (rp_power_mean + 3 * rp_power_std) && (ripple_peak_index - window_size) > 0 && (ripple_peak_index + window_size) < length(lfp_signal) && (ripple_peak_index + window_size) < length(lfp_spw)
+        if peak_ripple_amplitude > (rp_power_mean + std_cutoff * rp_power_std) && (ripple_peak_index - window_size) > 0 && (ripple_peak_index + window_size) < length(lfp_signal) && (ripple_peak_index + window_size) < length(lfp_spw)
             avg_spw = avg_spw + lfp_spw(ripple_peak_index - window_size:ripple_peak_index + window_size);  % Update average sharp wave
             spw_waveform = lfp_spw(ripple_peak_index - window_size:ripple_peak_index + window_size);  % Store sharp wave for this event
             rp_waveform = lfp_rp(ripple_peak_index - window_size:ripple_peak_index + window_size);  % Store ripple for this event
