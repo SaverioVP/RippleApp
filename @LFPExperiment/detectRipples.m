@@ -6,14 +6,55 @@ if isempty(obj.lfp_data) || isempty(obj.time_vec) || obj.sf == 0
     error('Error finding ripples: LFPExperiment object is not initialized. Please call loadData first.');
 end
 
-% Print the parameters at the start
-disp('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
-fprintf('Finding ripples with:\n');
-fprintf('  Standard Deviation Cutoff: %.2f\n', std_cutoff);
-fprintf('  Frequency Band: [%d, %d] Hz\n', freq_band(1), freq_band(2));
-fprintf('  Window Size: %d samples\n', window_size);
-fprintf('  Minimum Event Duration: %d samples\n', min_event_duration);
-disp('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
+obj.std_cutoff = std_cutoff;
+obj.freq_band = freq_band;
+obj.window_size = window_size;
+obj.min_event_duration = min_event_duration;
+
+
+% Compute the filtered band for the entire LFP
+obj.lfp_ripple_band_filtered = cell(obj.num_tetrodes, 1);
+for tet_id = 1:obj.num_tetrodes
+    lfp_data = obj.lfp_data{tet_id};
+    % Ensure LFP is a row vector
+    if size(lfp_data, 2) == 1  
+        disp('LFP data is a column vector, transposing...');
+        lfp_data = lfp_data.';  
+    end
+    obj.lfp_ripple_band_filtered{tet_id} = eegfilt(lfp_data, obj.sf, freq_band(1), freq_band(2));
+end
+
+% Compute sharp wave band for entire LFP
+obj.lfp_sharp_wave_filtered = cell(obj.num_tetrodes, 1);
+for tet_id = 1:obj.num_tetrodes
+    % Ensure LFP is a row vector
+    lfp_data = obj.lfp_data{tet_id};
+    if size(lfp_data, 2) == 1
+        lfp_data = lfp_data.';  % Transpose to make it a row vector
+    end
+    obj.lfp_sharp_wave_filtered{tet_id} = mybutter(lfp_data, obj.sf, 5, 15);  % Filter in the sharp wave band (8-40 Hz)
+end
+
+%% Compute detection threshold for LFP
+obj.det_threshold = cell(obj.num_tetrodes, 1);
+
+% Calculate mean and std of ripple band power
+for tet_id = 1:obj.num_tetrodes
+    lfp_data = obj.lfp_data{tet_id};
+    if size(lfp_data, 2) == 1
+        lfp_data = lfp_data.';  % Transpose to make it a row vector
+    end
+    lfp_rp = eegfilt(lfp_data, obj.sf, freq_band(1), freq_band(2));
+    lfp_rp_hil = abs(hilbert(lfp_rp));  % Envelope of the ripple band signal using Hilbert transform
+    lfp_rp_power = smoothdata(lfp_rp_hil, 'gaussian', 10);  % Smooth the ripple band envelope  
+    rp_power_mean = mean(lfp_rp_power);  % Filter in the sharp wave band (8-40 Hz)
+    rp_power_std = std(lfp_rp_power);
+    obj.det_threshold{tet_id} = rp_power_mean + std_cutoff * rp_power_std; 
+end
+
+% Set threshold for ripple detection as mean + (Cutoff * standard deviation)
+
+
 
 % Vars to store data about found ripple events
 total_ripples = 0;
@@ -67,24 +108,12 @@ for tetrode = 1:obj.num_tetrodes
     ripple_count_per_tetrode(tetrode) = length(swrEvents);
     total_ripples = total_ripples + length(swrEvents);
 end
-    fprintf('Total Number of Ripple Events Detected: %d\n', total_ripples);
-    % Print summary of the ripple detection results
-    if total_ripples > 0
-        avg_frequency = total_frequency / total_ripples;
-        avg_duration = total_duration / total_ripples;
-        %if velocity_available
-        %    avg_speed = total_animal_velocity / total_ripples;
-        %    fprintf('Average animal speed during event: %.2f cm/s\n', avg_speed);
-        %else
-        %    fprintf('Average animal speed during event: Not available\n');
-        %end
-        fprintf('Average Internal Frequency: %.2f Hz\n', avg_frequency);
-        fprintf('Average Duration: %.2f ms\n', avg_duration * 1000);
-    else
-        fprintf('No ripple events detected.\n');
-    end
 
-    for tetrode = 1:obj.num_tetrodes
-        fprintf('  Tetrode %d: %d ripples\n', tetrode, ripple_count_per_tetrode(tetrode));
-    end
+obj.total_ripples = total_ripples;
+
+if total_ripples > 0
+    obj.avg_frequency = total_frequency / total_ripples;
+    obj.avg_duration = total_duration / total_ripples;
+end
+
 end

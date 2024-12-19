@@ -6,7 +6,7 @@ function plotLfpDataOnAxes(obj, axesHandle)
     disp("Plotting...")
     % Check if the object has been initialized with data
     if isempty(obj.lfp_data) || isempty(obj.time_vec) || obj.sf == 0
-        error('Error plotting data: LFPExperiment object is not initialized. Please call loadData first.');
+        error('Error plotting data: LFPExperiment object is not properly initialized.');
     end
 
     cla(axesHandle, 'reset');

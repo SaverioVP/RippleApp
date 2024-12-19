@@ -1,4 +1,4 @@
-function plotSwrEvent(obj, axesHandle, event_id, showFIR, showEnvelope, mainLfpAxesHandle)
+function plotSwrEvent(obj, axesHandle, event_id, showLFP, showEnvelope, showSW, showRip, showDet, mainLfpAxesHandle)
 % Plot a single SWR Event on its own axis with some extra info
 cla(axesHandle);
 
@@ -39,23 +39,24 @@ ripple_end_idx = ee - es_padded + 1;
 
 % Plot the raw LFP trace before the ripple (in blue)
 hold(axesHandle, 'on');
-plot(axesHandle, raw_time_vec_padded(1:ripple_start_idx), raw_lfp_padded(1:ripple_start_idx), ...
-     'Color', [0 0 1], 'LineWidth', 1.5);  % Blue - Before the ripple
-
-% Plot the portion of the raw LFP trace during the ripple (in red)
-plot(axesHandle, raw_time_vec_padded(ripple_start_idx:ripple_end_idx), raw_lfp_padded(ripple_start_idx:ripple_end_idx), ...
-     'Color', [1 0 0], 'LineWidth', 1.5);  % Red - During the ripple
-
-% Plot the raw LFP trace after the ripple (in blue)
-plot(axesHandle, raw_time_vec_padded(ripple_end_idx:end), raw_lfp_padded(ripple_end_idx:end), ...
-     'Color', [0 0 1], 'LineWidth', 1.5);  % Blue - After the ripple
-
+if showLFP
+    plot(axesHandle, raw_time_vec_padded(1:ripple_start_idx), raw_lfp_padded(1:ripple_start_idx), ...
+         'Color', [0 0 1], 'LineWidth', 1.5);  % Blue - Before the ripple
+    
+    % Plot the portion of the raw LFP trace during the ripple (in red)
+    plot(axesHandle, raw_time_vec_padded(ripple_start_idx:ripple_end_idx), raw_lfp_padded(ripple_start_idx:ripple_end_idx), ...
+         'Color', [1 0 0], 'LineWidth', 1.5);  % Red - During the ripple
+    
+    % Plot the raw LFP trace after the ripple (in blue)
+    plot(axesHandle, raw_time_vec_padded(ripple_end_idx:end), raw_lfp_padded(ripple_end_idx:end), ...
+         'Color', [0 0 1], 'LineWidth', 1.5);  % Blue - After the ripple
+end
 
 %% Plot the filtered LFP trace (ripple waveform) using event indices
-if showFIR
-    event_fir = obj.lfp_fir_filtered{tetrode_num}(es_padded:ee_padded);
-    plot(axesHandle, raw_time_vec_padded, event_fir, 'Color', [1 0.5 0], 'LineWidth', 1.5);  % Orange - FIR filtered trace
-end
+%if showFIR
+%    event_fir = obj.lfp_fir_filtered{tetrode_num}(es_padded:ee_padded);
+%    plot(axesHandle, raw_time_vec_padded, event_fir, 'Color', [1 0.5 0], 'LineWidth', 1.5);  % Orange - FIR filtered trace
+%end
 
 %% Plot the shaded area under the envelope
 if showEnvelope
@@ -63,6 +64,26 @@ if showEnvelope
     fill(axesHandle, [raw_time_vec_padded, fliplr(raw_time_vec_padded)], ...
           [event_hilbert, fliplr(zeros(size(event_hilbert)))], ...
           [0.3 1 0.3], 'FaceAlpha', 0.3, 'EdgeColor', 'none');  % Green shaded area
+end
+
+
+%% Plot SW Filtered Trace
+if showSW
+    event_sw_filt = obj.lfp_sharp_wave_filtered{tetrode_num}(es_padded:ee_padded);
+    plot(axesHandle, raw_time_vec_padded, event_sw_filt, 'Color', [1 0.5 0], 'LineWidth', 1.5);
+end
+
+%% Plot Ripple Filtered Trace
+if showRip
+    event_rip_filt = obj.lfp_ripple_band_filtered{tetrode_num}(es_padded:ee_padded);
+    plot(axesHandle, raw_time_vec_padded, event_rip_filt, 'Color', [1 0 1], 'LineWidth', 1.5);
+end
+
+%% Plot Detection Threshold
+if showDet
+    yline(axesHandle, obj.det_threshold{tetrode_num}, 'r', 'LineWidth', 1);
+    %plot(axesHandle, raw_time_vec_padded, obj.det_threshold{tetrode_num}, 'Color', [1 0 1], 'LineWidth', 1.5);
+    %disp(obj.det_threshold{tetrode_num})
 end
 
 %% Show Zero Crossings
